@@ -80,9 +80,15 @@ public class EV3Communicator {
      * @param direction value in [-0.5,0.5]
      */
     public void sendDirection(double direction) {
+        String sdir="F0;";
+        if (direction<-0.1) {sdir="L" + Double.toString(direction) +";";}
+
+        if (direction>0.1) {sdir="R" + Double.toString(direction)+";" ;}
+        if (direction==-100) {sdir="N0;" ;}
+
         if( isConnected() ) {
             try {
-                connectTask.out.writeDouble(direction);
+                connectTask.out.writeBytes(sdir);
             } catch (IOException e) {
                 Log.e(MainActivity.TAG,"Cannot send, connection terminated");
                 connectTask.close();
