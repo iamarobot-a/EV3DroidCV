@@ -13,6 +13,8 @@ import java.net.SocketException;
 import java.util.Collections;
 import java.util.List;
 
+import static java.lang.Math.round;
+
 /**
  * Created by rics on 2017.01.10..
  */
@@ -81,7 +83,7 @@ public class EV3Communicator {
      */
     public void sendDirection(double direction) {
         String sdir="F0;";
-        if (direction<-0.1) {sdir="L" + Double.toString(direction) +";";}
+        if (direction<-0.1) {sdir="L" + Double.toString(direction) + ";";}
 
         if (direction>0.1) {sdir="R" + Double.toString(direction)+";" ;}
         if (direction==-100) {sdir="N0;" ;}
