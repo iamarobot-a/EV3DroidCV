@@ -82,10 +82,12 @@ public class EV3Communicator {
      * @param direction value in [-0.5,0.5]
      */
     public void sendDirection(double direction) {
+        String strDir=Double.toString(direction);
+        strDir=strDir.substring(0,Math.min(5,strDir.length()));
         String sdir="F0;";
-        if (direction<-0.1) {sdir="L" + Double.toString(direction) + ";";}
+        if (direction<-0.1) {sdir="L" + strDir  + ";";}
 
-        if (direction>0.1) {sdir="R" + Double.toString(direction)+";" ;}
+        if (direction>0.1) {sdir="R" + strDir +";" ;}
         if (direction==-100) {sdir="N0;" ;}
 
         if( isConnected() ) {

@@ -1,7 +1,8 @@
 # !/usr/bin/env python
 import socket
 from collections import deque
-TCP_IP = '192.168.16.68'
+TCP_IP = '192.168.45.133'
+#TCP_IP = '192.168.16.68'
 #TCP_IP = '127.0.0.1' #127.0.0.1 for android emulator test runs
 #https://developer.android.com/studio/run/emulator-networking.html
 TCP_PORT = 1234
@@ -29,10 +30,10 @@ try:
                     buffer=buffer+ww
         else:
             buffer=buffer+data
-        if len(mystack)>max_stack_len:
+        while( len(mystack)>max_stack_len):
             mystack.popleft()
             #print("stack low element removed")
-            print(mystack)
+        print(mystack)    
 except KeyboardInterrupt:
     print("W: interrupt received")
 finally:
