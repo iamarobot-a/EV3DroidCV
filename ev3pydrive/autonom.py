@@ -67,7 +67,7 @@ mH=MediumMotor('outA')
 tooClose=50
 stack=Safestack(10)
 director=Director(stack,"192.168.45.133",1234)
-director.run()
+# director.run()
 # We will need to check EV3 buttons state.
 # btn = Button()   NOT WORKING
 
@@ -83,17 +83,6 @@ def headmover(grades,speed):
     # time.sleep(0.5)
     return ir.value()
 
-
-def start():
-    """
-    Start both motors. `run_forever` command will allow to vary motor
-    performance on the fly by adjusting `speed_sp` attribute.
-    """
-    print("start called")
-
-    for m in motors:
-        m.speed_sp=200
-        m.run_forever()
 def restart():
     """
     Start both motors. `run_forever` command will allow to vary motor
@@ -173,113 +162,91 @@ def turntoway(grades):
     mR.run_timed(time_sp=turngrades, speed_sp=spR)
     mL.wait_until_not_moving(timeout=1000)
     mR.wait_until_not_moving(timeout=1000)
-    time.sleep(1)
-
-def findway():
-    angles=[60, 30, 0, -30, -60, -120, -90, 90, 120, 180, 150, -150, -180]
-    speeds=[100, 30, 30, 30, 30, 100, 30, 30, 30, 100, 30, 100, 30]
-    angle=0
-    lproxi=0
-    #p0=headmover(angles[0],speeds[0])
-    ldist=ir.value()
-    for ii in range(1,12):
-        anglecurr=30
-        #print(anglecurr, proxi)
-        turntoway(anglecurr)
-        dist = ir.value()
-        print("current measured distance at angle:", anglecurr*ii,dist)
-        if dist>tooClose:
-            angle=1
-            return angle
-        if dist>ldist:
-            ldist=dist
-            angle=30*ii
-        if tsGetValue():
-            print ("bumped when turning.")
-            backup()
-            turn()
-            restart()
-            return 1
-    print ("max measured distance at angle:",angle)
-    print ("turning back")
-    turntoway(-(360-angle))
-    return 1
-
+    time.sleep(0.3)
 
 def stop():
     print("Stopping...")
     for m in motors:
         m.stop()
+Steps={}
+Steps["BUMPED"]=[stop,backup,turn,restart]
+Steps["AVOID"]=[stop,turntoway]
 # Run the robot until a button is pressed.
 #ENTRY POINT
 try:
     dc=50
     ldc=0
     ldist=100
-    # for m in motors:
-    #     m.polarity = "inversed"
+    for m in motors:
+         m.speed_sp=200
     headmover(0,100)
-    start()
+    # start()
     print("Program started.")
+    State="FORWARD"
+    NewState=""
+    StateCtr=0
+    StateChgCtr=0
     # while not btn.any():   NOT WORKING
     while True:    # Stop program with Ctrl-C
+        NewState=""
         distance = ir.value()
+        StateCtr=StateCtr+1
         if distance<tooClose:
             #will be changed to a more proper path finding
             print ("Object too close:%" ,distance )
-            stop()
-            angle=findway()
-            #headmover(0,100)
-            if angle>=360:
-                backup()
-            else:
-                #turntoway(angle)
-                restart()
-            continue
+            NewState="AVOID"
         if tsGetValue():
-            # We bumped an obstacle.
-            # Back away, turn and go in other direction.
-            print("Bumped.")
-            backup()
-            turn()
-            restart()
-            continue #hopefully not running the other parts of the loop
+            NewState="BUMPED"
+        print("State, NewState:",State,NewState)
+        if NewState=="":
+            cameradir=stack.pop()
+            if (cameradir!=""):
+                w=cameradir[:1]
+                if w in ["R","L","B","F"]:
+                    NewState="FOLLOW"
+                if w in ["X","Y","Z"]:
+                    NewState="AVOIDCAM"
 
-
-        cameradir=stack.pop()
-        if (cameradir!=""):
-            w=cameradir[:1]
-            if w=="R":
-                turntoway(10)
+        if NewState!="" and NewState!=State:
+            print ("State changing from %s to %s",State,NewState)
+            State=NewState
+            StateChgCtr=StateCtr
+        if State=="BUMPED":
+            ctr=StateCtr-StateChgCtr
+            steps=Steps["BUMPED"]
+            if ctr>=len(steps):
+                State="FORWARD"
                 continue
-            if w=="L":
-                turntoway(-10)
-                continue
-            if w=="B":
-                backup()
-                continue
-
-        # Infrared sensor in proximity mode will measure distance to the closest
-        # object in front of it.
-
-        distance = ir.value()
-
-        if abs(ldist-distance)/(distance+1)>0.1:
-            print("Distance from IR:%",distance)
-            ldist = distance
-        if distance > tooClose+20:
-            # Path is clear, run at full speed.
-            dc = 50
-        else:
-            # Obstacle ahead, slow down.
-            dc = 40
-        if ldc!=dc:
-            print("motor speed to %", dc)
-        for m in motors:
-            m.speed_sp = dc
-            m.run_forever()
-        ldc=dc
-        sleep(0.05)
+            else:
+                step=steps[ctr]
+                print ("step for bump:",step)
+                step()
+        if State=="FORWARD":
+            # print ("running:",mL.is_running,mR.is_running)
+            if mL.is_running==False:
+                print ("start L")
+                mL.run_forever()
+            if mR.is_running==False:
+                print ("start R")
+                mR.run_forever()
+        if State=="AVOID":
+            ctr=StateCtr-StateChgCtr
+            steps=Steps["AVOID"]
+            if ctr>=len(steps):
+                ctr=1
+            step=steps[ctr]
+            print ("step for avoid:",step)
+            if ctr==0:
+                stop()
+            else:
+                angle=30
+                turntoway(angle)
+                if ir.value()>tooClose:
+                    print("found a way.")
+                    restart()
+                    State="FORWARD"
+                    continue
+        sleep(0.1)
 
 except KeyboardInterrupt:
     print("W: interrupt received")

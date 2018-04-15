@@ -12,7 +12,7 @@ class Safestack(deque):
     __maxlen=10
     def __init__(self,maxlen):
         __maxlen=maxlen
-        deque.__init__(self)
+        deque.__init__(self,)
 
     def popleft(self):
         'safe pop left, returns empty when que is 0 lenght'
