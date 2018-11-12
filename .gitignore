@@ -10,3 +10,4 @@
 openCVLibrary320/build/
 openCVLibrary320/src/main/jniLibs/
 /images
+/.idea/*

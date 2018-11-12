@@ -67,9 +67,11 @@ public class CameraHandler implements CvCameraViewListener2 {
         mRgbaF = new Mat(height, width, CvType.CV_8UC4);
         mRgbaT = new Mat(width, width, CvType.CV_8UC4);  // NOTE width,width is NOT a typo
         mDetector = new ColorBlobDetector();
-        mBlobColorHsv = new Scalar(280/2,0.65*255,0.75*255,255); // hue in [0,180], saturation in [0,255], value in [0,255]
+        //mBlobColorHsv = new Scalar(280/2,0.65*255,0.75*255,255); // hue in [0,180], saturation in [0,255], value in [0,255]
+
+        mBlobColorHsv = new Scalar(50,12,18,255);
         mDetector.setHsvColor(mBlobColorHsv);
-        CONTOUR_COLOR = new Scalar(255,0,0,255);
+        CONTOUR_COLOR = new Scalar(0,0,255,255);
         MARKER_COLOR = new Scalar(0,0,255,255);
         TEXT_COLOR = new Scalar(255,255,255,255);
         org = new Point(1,20);
@@ -100,7 +102,7 @@ public class CameraHandler implements CvCameraViewListener2 {
         if( ev3Communicator.isConnected() ) {
             Log.i(MainActivity.TAG, "Contours count: " + contours.size());
         }
-        Imgproc.drawContours(mRgba, contours, -1, CONTOUR_COLOR);
+        Imgproc.drawContours(mRgba, contours, -1, CONTOUR_COLOR,10);
         Point center = mDetector.getCenterOfMaxContour();
         double direction = 0;
         if( center != null ) {
